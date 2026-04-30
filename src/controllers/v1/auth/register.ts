@@ -14,8 +14,20 @@ type UserData = Pick<IUser, 'email' | 'password' | 'role'>;
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, role } = req.body as UserData;
+    
+    if (!email || !password) {
+      res.status(400).json({
+        code: 'InvalidInput',
+        message: 'Email and password are required',
+      });
+      return;
+    }
+    const emailNormalized = email.trim().toLowerCase();
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: emailNormalized })
+      .collation({ locale: 'en', strength: 2 })
+      .lean()
+      .exec();
 
     if (existingUser) {
       res.status(409).json({
@@ -29,22 +41,27 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     if (
       role === 'admin' &&
-      !config.whiteListedAdmins.includes(email.toLowerCase())
+      (!config.whiteListedAdmins ||
+        !config.whiteListedAdmins.includes(emailNormalized))
     ) {
       res.status(403).json({
         code: 'Unauthorized',
         message: 'You are not authorized to register as an admin',
       });
-      logger.warn(`Unauthorized admin registration attempt: ${email}`);
+      logger.warn(
+        `Unauthorized admin registration attempt: ${emailNormalized}`,
+      );
       return;
     }
 
     const newUser = new User({
       username,
-      email,
+      email: emailNormalized,
       password,
       role,
     });
+
+    await newUser.save();
 
     const accessToken = generateAccessToken(newUser._id);
     const refreshToken = generateRefreshToken(newUser._id);
@@ -53,9 +70,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       userId: newUser._id,
       token: refreshToken,
     });
-    logger.info(`Saving refresh token for user: ${email}`);
 
     await token.save();
+    logger.info(`Saving refresh token for user: ${emailNormalized}`);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -63,26 +80,23 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       sameSite: 'strict',
     });
 
-    await newUser.save();
-
+    logger.info(`User registered: ${emailNormalized}`);
     res.status(201).json({
       code: 'UserRegistered',
       data: {
         username,
-        email,
+        email: emailNormalized,
         role,
       },
       accessToken,
       message: 'User registered successfully',
     });
-
-    logger.info(`User registered: ${email}`);
   } catch (err) {
+    logger.error('Error in register controller:', err);
     res.status(500).json({
       code: 'ServerError',
       message: 'Internal Server Error',
       error: err,
     });
-    logger.error('Error in register controller:', err);
   }
 };

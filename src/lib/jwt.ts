@@ -24,3 +24,19 @@ export const generateRefreshToken = (userId: Types.ObjectId): string => {
     subject: 'refreshApi',
   });
 };
+
+export const verifyAccessToken = (token: string): { userId: string } => {
+  const secret = config.jwtAccessSecret;
+  if (!secret) {
+    throw new Error('JWT access secret is not defined');
+  }
+  return jwt.verify(token, secret) as { userId: string };
+};
+
+export const verifyRefreshToken = (token: string): { userId: string } => {
+  const secret = config.jwtRefreshSecret;
+  if (!secret) {
+    throw new Error('JWT refresh secret is not defined');
+  }
+  return jwt.verify(token, secret) as { userId: string };
+};

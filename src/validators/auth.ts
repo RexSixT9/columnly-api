@@ -1,12 +1,13 @@
-import { z } from 'zod';
+import { refine, z } from 'zod';
 
 export const registerSchema = z.object({
   email: z
     .string({ message: 'Email is required and must be valid' })
     .trim()
     .min(1, 'Email is required and must be valid')
-    .email('Email is required and must be valid')
-    .max(50, 'Email must be less than 50 characters long'),
+    .max(50, 'Email must be less than 50 characters long')
+    .toLowerCase()
+    .email('Email must be a valid email address'),
   password: z
     .string({ message: 'Password is required' })
     .min(1, 'Password is required')
@@ -19,8 +20,9 @@ export const loginSchema = z.object({
     .string({ message: 'Email is required and must be valid' })
     .trim()
     .min(1, 'Email is required and must be valid')
-    .email('Email is required and must be valid')
-    .max(50, 'Email must be less than 50 characters long'),
+    .max(50, 'Email must be less than 50 characters long')
+    .toLowerCase()
+    .email('Email must be a valid email address'),
   password: z
     .string({ message: 'Password is required' })
     .min(1, 'Password is required')
