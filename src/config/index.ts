@@ -13,7 +13,6 @@ const config = {
     'http://localhost:3000',
     'http://127.0.0.1:3000',
   ],
-
   MONGO_URI: process.env.MONGO_URI,
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
@@ -26,6 +25,8 @@ const config = {
         email.trim().toLowerCase(),
       )
     : [],
+  defaultResLimit: 20,
+  defaultResOffset: 0,
 };
 
 export default config;

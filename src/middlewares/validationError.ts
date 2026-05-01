@@ -1,9 +1,19 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { ZodTypeAny } from 'zod';
 
-export const validationErrorHandler = (schema: ZodTypeAny) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const result = schema.safeParse(req.body);
+type SchemaFactory = (req: Request) => ZodTypeAny;
+
+export const validationErrorHandler = (
+  schema: ZodTypeAny | SchemaFactory,
+) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    const resolvedSchema =
+      typeof schema === 'function' ? schema(req) : schema;
+    const result = await resolvedSchema.safeParseAsync(req.body);
 
     if (!result.success) {
       const errors = result.error.flatten();

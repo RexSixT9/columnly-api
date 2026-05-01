@@ -2,7 +2,11 @@
 
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
-import { verifyRefreshToken, generateAccessToken } from '@/lib/jwt';
+import {
+  verifyRefreshToken,
+  generateAccessToken,
+  generateRefreshToken,
+} from '@/lib/jwt';
 import { logger } from '@/lib/winston';
 
 import Token from '@/models/tokens';
@@ -16,21 +20,21 @@ interface RefreshTokenPayload {
 
 const refreshToken = async (req: Request, res: Response): Promise<void> => {
   const token = req.cookies.refreshToken as string;
-
+  if (!token) {
+    res.status(401).json({
+      code: 'NoToken',
+      message: 'Refresh token is required',
+    });
+    return;
+  }
   try {
-    if (!token) {
-      res.status(401).json({
-        code: 'NoToken',
-        message: 'Refresh token is required',
-      });
-      return;
-    }
     const jwtPayload = verifyRefreshToken(
       token,
     ) as unknown as RefreshTokenPayload;
 
-    const tokenExists = await Token.exists({ token });
-    if (!tokenExists) {
+    const tokenDoc = await Token.findOne({ token });
+    if (!tokenDoc) {
+      logger.warn('Refresh token not found in database', { token });
       res.status(401).json({
         code: 'InvalidToken',
         message: 'Invalid refresh token',
@@ -38,12 +42,33 @@ const refreshToken = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    await Token.deleteOne({ token });
+    const newRefreshToken = generateRefreshToken(jwtPayload.userId);
+    await Token.create({ token: newRefreshToken, userId: jwtPayload.userId });
+
+    // const tokenExists = await Token.exists({ token });
+    // if (!tokenExists) {
+    //   res.status(401).json({
+    //     code: 'InvalidToken',
+    //     message: 'Invalid refresh token',
+    //   });
+    //   return;
+    // }
+
     const accessToken = generateAccessToken(jwtPayload.userId);
+    logger.info('Refresh token processed successfully');
+
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
 
     res.json({
       code: 'TokenRefreshed',
       accessToken,
     });
+    
   } catch (err) {
     if (err instanceof TokenExpiredError) {
       logger.warn('Expired refresh token', { error: err.message });
