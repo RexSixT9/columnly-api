@@ -32,7 +32,7 @@ const refreshToken = async (req: Request, res: Response): Promise<void> => {
       token,
     ) as unknown as RefreshTokenPayload;
 
-    const tokenDoc = await Token.findOne({ token });
+    const tokenDoc = await Token.findOneAndDelete({ token }).exec();
     if (!tokenDoc) {
       logger.warn('Refresh token not found in database', { token });
       res.status(401).json({
@@ -42,7 +42,6 @@ const refreshToken = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    await Token.deleteOne({ token });
     const newRefreshToken = generateRefreshToken(jwtPayload.userId);
     await Token.create({ token: newRefreshToken, userId: jwtPayload.userId });
 

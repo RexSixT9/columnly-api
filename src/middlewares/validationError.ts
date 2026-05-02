@@ -2,9 +2,11 @@ import type { Request, Response, NextFunction } from 'express';
 import type { ZodTypeAny } from 'zod';
 
 type SchemaFactory = (req: Request) => ZodTypeAny;
+type ValidationTarget = 'body' | 'params' | 'query';
 
 export const validationErrorHandler = (
   schema: ZodTypeAny | SchemaFactory,
+  target: ValidationTarget = 'body',
 ) => {
   return async (
     req: Request,
@@ -13,7 +15,13 @@ export const validationErrorHandler = (
   ): Promise<void> => {
     const resolvedSchema =
       typeof schema === 'function' ? schema(req) : schema;
-    const result = await resolvedSchema.safeParseAsync(req.body);
+    const input =
+      target === 'params'
+        ? req.params
+        : target === 'query'
+          ? req.query
+          : req.body;
+    const result = await resolvedSchema.safeParseAsync(input);
 
     if (!result.success) {
       const errors = result.error.flatten();
@@ -28,7 +36,13 @@ export const validationErrorHandler = (
       return;
     }
 
-    req.body = result.data;
+    if (target === 'params') {
+      req.params = result.data as Request['params'];
+    } else if (target === 'query') {
+      req.query = result.data as Request['query'];
+    } else {
+      req.body = result.data;
+    }
     next();
   };
 };
