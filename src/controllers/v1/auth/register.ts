@@ -39,11 +39,18 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const username = genUsername();
 
-    if (
-      role === 'admin' &&
-      (!config.whiteListedAdmins ||
-        !config.whiteListedAdmins.includes(emailNormalized))
-    ) {
+    const isAdminRequest = role === 'admin';
+    const isWhitelisted = config.whiteListedAdmins.includes(emailNormalized);
+
+    if (isAdminRequest && config.nodeEnv !== 'production') {
+      logger.info('Admin registration check', {
+        email: emailNormalized,
+        isWhitelisted,
+        whitelistCount: config.whiteListedAdmins.length,
+      });
+    }
+
+    if (isAdminRequest && (!config.whiteListedAdmins || !isWhitelisted)) {
       res.status(403).json({
         code: 'Unauthorized',
         message: 'You are not authorized to register as an admin',
