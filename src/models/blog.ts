@@ -49,7 +49,7 @@ const blogSchema = new Schema<IBlog>(
   },
 );
 
-blogSchema.pre('validate', function (next) {
+blogSchema.pre('validate', function (this: IBlog & { slug?: string }) {
   if (this.title && !this.slug) {
     this.slug = genSlug(this.title);
   }

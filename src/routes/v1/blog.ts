@@ -11,7 +11,7 @@ import { createBlogSchema } from '@/validators/blog';
 // controllers
 import { createBlog } from '@/controllers/v1/blog/create_blog';
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer();
 
 const router = Router();
 

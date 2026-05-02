@@ -1,6 +1,6 @@
 export const genUsername = (): string => {
   const usernamePrefix = 'user-';
-  const randomChars = Math.random().toString(36).slice(2); // Generate a random string of characters
+  const randomChars = Math.random().toString(36).slice(2);
   return usernamePrefix + randomChars;
 };
 
@@ -12,6 +12,6 @@ export const genSlug = (title: string): string => {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '');
 
-  const randomChars = Math.random().toString(36).slice(2, 8); // Generate a random string of characters
+  const randomChars = Math.random().toString(36).slice(2);
   return `${slug}-${randomChars}`;
 };
