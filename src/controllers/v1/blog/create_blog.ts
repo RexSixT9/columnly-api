@@ -12,10 +12,7 @@ type BlogData = Pick<IBlog, 'title' | 'content' | 'banner' | 'status'>;
 const window = new JSDOM('').window;
 const purify = DOMPurify(window);
 
-export const createBlog = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+const createBlog = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, content, banner, status } = req.body as BlogData;
     const authorId = req.userId;
@@ -45,3 +42,5 @@ export const createBlog = async (
     });
   }
 };
+
+export default createBlog;
