@@ -25,11 +25,6 @@ const getAllBlogs = async (req: Request, res: Response) => {
     const query: QueryType = {};
     const user = await User.findById(userId).select('role').lean().exec();
 
-    if (!user) {
-      res.status(401).json({ code: 'UNAUTHORIZED', message: 'Unauthorized' });
-      return;
-    }
-
     if (limit < 1 || limit > 50 || offset < 0) {
       res.status(400).json({
         code: 'InvalidPaginationParameters',
@@ -40,12 +35,12 @@ const getAllBlogs = async (req: Request, res: Response) => {
     }
 
     // Show only the published post to a normal user.
-    if (user.role === 'user') {
+    if (!user ||user.role === 'user') {
       query.status = 'published';
     }
 
-    const total = await Blog.countDocuments(query);
-    const blogs = await Blog.find(query)
+    const total = await Blog.countDocuments();
+    const blogs = await Blog.find()
       .select('-banner.publicId -__v')
       .populate('author', 'firstName lastName username email')
       .limit(limit)

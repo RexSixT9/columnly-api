@@ -1,5 +1,8 @@
+import { v2 as cloudinary } from 'cloudinary';
+
 import { logger } from '@/lib/winston';
 import User from '@/models/user';
+import Blog from '@/models/blog';
 
 import type { Request, Response } from 'express';
 
@@ -16,8 +19,21 @@ export const deleteCurrentUser = async (req: Request, res: Response) => {
       });
       return;
     }
+    const userBlogs = await Blog.find({ author: userId })
+      .select('banner.publicId')
+      .lean()
+      .exec();
+    for (const blog of userBlogs) {
+      if (blog.banner?.publicId) {
+        await cloudinary.uploader.destroy(blog.banner.publicId, {
+          resource_type: 'image',
+        });
+      }
+    }
 
-    await user.deleteOne();
+    await Blog.deleteMany({ author: userId });
+
+    await user.deleteOne({ _id: userId });
 
     logger.info('Current user deleted successfully', { userId });
 

@@ -1,13 +1,14 @@
-import { genSlug } from '@/utils';
 import { Schema, model, Types } from 'mongoose';
+
+import { genSlug } from '@/utils';
 
 export interface IBlog {
   title: string;
-  content: string;
   slug: string;
+  content: string;
   banner: {
-    url: string;
     publicId: string;
+    url: string;
     width: number;
     height: number;
   };
@@ -16,29 +17,65 @@ export interface IBlog {
   likesCount: number;
   commentsCount: number;
   status: 'draft' | 'published';
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const blogSchema = new Schema<IBlog>(
   {
-    title: { type: String, required: true, maxlength: 180 },
-    content: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    banner: {
-      url: { type: String, required: true },
-      publicId: { type: String, required: true },
-      width: { type: Number, required: true },
-      height: { type: Number, required: true },
+    title: {
+      type: String,
+      required: [true, 'Title is required'],
+      maxLength: [180, 'Title must be less than 180 characters'],
     },
-    author: { type: Types.ObjectId, ref: 'User', required: true },
-    viewsCount: { type: Number, default: 0 },
-    likesCount: { type: Number, default: 0 },
-    commentsCount: { type: Number, default: 0 },
+    slug: {
+      type: String,
+      required: [true, 'Slug is required'],
+      unique: [true, 'Slug must be unique'],
+    },
+    content: {
+      type: String,
+      required: [true, 'Content is required'],
+    },
+    banner: {
+      publicId: {
+        type: String,
+        required: [true, 'Banner public id is required'],
+      },
+      url: {
+        type: String,
+        required: [true, 'Banner URL is required'],
+      },
+      width: {
+        type: Number,
+        required: [true, 'Banner width is required'],
+      },
+      height: {
+        type: Number,
+        required: [true, 'Banner height is required'],
+      },
+    },
+    author: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Author is required'],
+    },
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+    commentsCount: {
+      type: Number,
+      default: 0,
+    },
     status: {
       type: String,
-      enum: ['draft', 'published'],
-      message: '{VALUE} is not a valid status',
+      enum: {
+        values: ['draft', 'published'],
+        message: '{VALUE} is not supported',
+      },
       default: 'draft',
     },
   },
@@ -49,10 +86,12 @@ const blogSchema = new Schema<IBlog>(
   },
 );
 
+
 blogSchema.pre('validate', function (this: IBlog & { slug?: string }) {
   if (this.title && !this.slug) {
     this.slug = genSlug(this.title);
   }
 });
+
 
 export default model<IBlog>('Blog', blogSchema);

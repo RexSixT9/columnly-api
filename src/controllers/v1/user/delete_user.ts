@@ -1,6 +1,11 @@
-import { Request, Response } from 'express';
+import { v2 as cloudinary } from 'cloudinary';
+
 import { logger } from '@/lib/winston';
 import User from '@/models/user';
+import Blog from '@/models/blog';
+
+import type { Request, Response } from 'express';
+
 export const deleteUser = async (
   req: Request,
   res: Response,
@@ -8,15 +13,29 @@ export const deleteUser = async (
   try {
     const userId = req.params.userId;
 
-    const user = await User.findByIdAndDelete(userId);
+    const blogs = await Blog.find({ author: userId })
+      .select('banner.publicId')
+      .lean()
+      .exec();
 
-    if (!user) {
-      res.status(404).json({
-        code: 'NotFound',
-        message: 'User not found',
+    if (blogs.length) {
+      const publicIds = blogs.map(({ banner }) => banner.publicId);
+      await cloudinary.api.delete_resources(publicIds);
+      logger.info('Multiple blog banners deleted from cloudinary', {
+        publicIds,
       });
-      return;
+
+      await Blog.deleteMany({ author: userId });
+      logger.info('Multiple blogs deleted', {
+        userId,
+        blogs,
+      });
     }
+
+    await User.deleteOne({ _id: userId });
+    logger.info('A user account deleted', {
+      userId,
+    });
 
     res.status(200).json({
       code: 'Success',

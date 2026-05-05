@@ -11,7 +11,6 @@ interface QueryType {
 
 const getBlogsByUserId = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.params.userId;
     const currentUserId = req.userId;
 
     const limit =
@@ -19,10 +18,14 @@ const getBlogsByUserId = async (req: Request, res: Response): Promise<void> => {
     const offset =
       parseInt(req.query.offset as string, 10) || config.defaultResOffset;
 
-    const currentUser = await User.findById(currentUserId);
+    const query: QueryType = {};
+    const userId = req.params.userId;
+    const currentUser = await User.findById(currentUserId)
+      .select('role')
+      .exec();
 
     if (!currentUser) {
-      res.status(404).json({ message: 'Current user not found' });
+      res.status(404).json({ code: 'UserNotFound', message: 'Current user not found' });
       return;
     }
     if (limit < 1 || limit > 50 || offset < 0) {
@@ -33,7 +36,6 @@ const getBlogsByUserId = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    const query: QueryType = {};
     if (currentUser?.role === 'user') {
       query.status = 'published';
     }
@@ -49,10 +51,12 @@ const getBlogsByUserId = async (req: Request, res: Response): Promise<void> => {
       .lean()
       .exec();
 
-    res.status(200).json({ blogs, total });
+    res.status(200).json({ limit, offset, total, blogs });
   } catch (error) {
     logger.error('Error fetching blogs by user ID', { error });
-    res.status(500).json({ message: 'Internal server error' });
+    res
+      .status(500)
+      .json({ code: 'InternalServerError', message: 'Internal server error' });
   }
 };
 

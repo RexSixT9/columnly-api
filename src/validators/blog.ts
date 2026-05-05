@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { z } from 'zod';
 
 const bannerSchema = z.object({
@@ -28,6 +29,27 @@ export const createBlogSchema = z.object({
   banner: bannerSchema,
 });
 
+export const blogIdParamSchema = z.object({
+  blogId: z
+    .string()
+    .refine((val) => Types.ObjectId.isValid(val), {
+      message: 'Invalid blog ID',
+    })
+    .transform((val) => new Types.ObjectId(val)),
+});
+
+export const updateBlogSchema = z
+  .object({
+    title: z.string().trim().min(1).max(180).optional(),
+    content: z.string().trim().min(1).optional(),
+    status: z.enum(['draft', 'published']).optional(),
+    banner: bannerSchema.optional(),
+  })
+  .strict()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided for update',
+  });
+
 export const blogQuerySchema = z.object({
   limit: z
     .string()
@@ -42,6 +64,6 @@ export const blogQuerySchema = z.object({
   status: z.enum(['draft', 'published']).optional(),
 });
 
-
 export type CreateBlogInput = z.infer<typeof createBlogSchema>;
+export type UpdateBlogInput = z.infer<typeof updateBlogSchema>;
 export type BlogQueryInput = z.infer<typeof blogQuerySchema>;
