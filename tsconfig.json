@@ -3,8 +3,6 @@
     "target": "ES6",
     "module": "commonjs",
     "rootDir": "src",
-    "baseUrl": "./",
-    "ignoreDeprecations": "6.0",
     "outDir": "dist",
     "removeComments": true,
     "esModuleInterop": true,
@@ -12,10 +10,11 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["src/*"]
+      "*": ["./*"],
+      "@/*": ["./src/*"]
     },
     "typeRoots": ["./src/types", "./node_modules/@types"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["./src/**/*"],
+  "exclude": ["./node_modules"]
 }

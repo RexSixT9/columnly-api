@@ -1,11 +1,13 @@
 {
-  "name": "blog-api",
+  "name": "columnly-api",
   "version": "1.0.0",
   "description": "",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc && tsc-alias",
+    "start": "node dist/server.js",
+    "start:prod": "pm2 start dist/server.js --name columnly-api --env production"
   },
   "keywords": [],
   "author": "rexsixt9",
