@@ -66,7 +66,7 @@ export const likeBlog = async (req: Request, res: Response): Promise<void> => {
     logger.error('Error liking blog', { error: err });
     res.status(500).json({
       code: 'InternalServerError',
-      message: 'Internal server error',
+      message: 'An unexpected error occurred while liking the blog',
     });
   }
 };

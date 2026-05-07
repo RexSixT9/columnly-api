@@ -45,6 +45,6 @@ export const deleteBlog = async (req: Request, res: Response) => {
     logger.error(`Error deleting blog: ${error}`);
     res
       .status(500)
-      .json({ code: 'InternalServerError', message: 'Internal server error' });
+      .json({ code: 'InternalServerError', message: 'An unexpected error occurred while deleting the blog' });
   }
 };

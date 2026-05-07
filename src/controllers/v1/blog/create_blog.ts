@@ -40,7 +40,7 @@ const createBlog = async (req: Request, res: Response)=> {
     logger.error(`Error in createBlog: ${error}`);
     res.status(500).json({
       code: 'InternalServerError',
-      message: 'An unexpected error occurred',
+      message: 'An unexpected error occurred while creating the blog',
     });
   }
 };

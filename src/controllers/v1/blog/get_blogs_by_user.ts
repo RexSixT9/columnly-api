@@ -56,7 +56,7 @@ const getBlogsByUserId = async (req: Request, res: Response): Promise<void> => {
     logger.error('Error fetching blogs by user ID', { error });
     res
       .status(500)
-      .json({ code: 'InternalServerError', message: 'Internal server error' });
+      .json({ code: 'InternalServerError', message: 'An unexpected error occurred while fetching blogs' });
   }
 };
 

@@ -74,7 +74,7 @@ const updateBlog = async (req: Request, res: Response): Promise<void> => {
     logger.error('Failed to update blog', { error });
     res.status(500).json({
       code: 'InternalServerError',
-      message: 'An error occurred while updating the blog',
+      message: 'An unexpected error occurred while updating the blog',
     });
   }
 };

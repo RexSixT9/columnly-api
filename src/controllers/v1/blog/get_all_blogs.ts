@@ -59,7 +59,7 @@ const getAllBlogs = async (req: Request, res: Response) => {
     logger.error('Error while fetching blogs', err);
     res.status(500).json({
       code: 'ServerError',
-      message: 'Internal server error',
+      message: 'Internal server error while fetching blogs',
     });
   }
 };

@@ -54,7 +54,7 @@ export const unLikeBlog = async (
     logger.error('Error unliking blog', { error });
     res.status(500).json({
       code: 'InternalServerError',
-      message: 'An error occurred while unliking the blog',
+      message: 'An unexpected error occurred while unliking the blog',
     });
   }
 };

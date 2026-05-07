@@ -47,7 +47,7 @@ const getBlogsBySlug = async (req: Request, res: Response) => {
     res.status(200).json({ blog });
   } catch (error) {
     logger.error('Error fetching blogs by slug', { error });
-    res.status(500).json({ code: 'InternalServerError', message: 'Internal server error' });
+    res.status(500).json({ code: 'InternalServerError', message: 'An unexpected error occurred while fetching the blog' });
   }
 };
 
