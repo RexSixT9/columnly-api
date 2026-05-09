@@ -29,7 +29,7 @@ const corsOptions: CorsOptions = {
 
     const isAllowed =
       config.nodeEnv === 'development' ||
-      !origin || // server-to-server / non-browser requests
+      !origin ||
       config.whiteListedOrigins.includes(origin);
 
     if (isAllowed) {
@@ -40,6 +40,7 @@ const corsOptions: CorsOptions = {
       callback(new Error(`CORS Error: ${origin} not allowed`), false);
     }
   },
+  credentials: true,
 };
 
 // Apply middleware in the correct order
