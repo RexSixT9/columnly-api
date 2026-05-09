@@ -84,7 +84,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: config.nodeEnv === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
     });
 
     logger.info(`User registered: ${emailNormalized}`);
