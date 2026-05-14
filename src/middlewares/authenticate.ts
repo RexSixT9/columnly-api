@@ -1,4 +1,3 @@
-// current file: src/middlewares/authenticate.ts
 
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { verifyAccessToken } from '@/lib/jwt';
