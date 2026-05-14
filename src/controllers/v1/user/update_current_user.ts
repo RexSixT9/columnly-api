@@ -9,9 +9,20 @@ export const updateCurrentUser = async (
   try {
     const userId = req.userId;
 
-    const user = await User.findById(userId)
-      .select('+password -__v')
-      .exec();
+    const {
+      email,
+      username,
+      password,
+      first_name,
+      last_name,
+      website,
+      facebook,
+      x,
+      instagram,
+      youtube,
+    } = req.body;
+
+    const user = await User.findById(userId).select('+password -__v').exec();
 
     if (!user) {
       res.status(404).json({
@@ -21,36 +32,23 @@ export const updateCurrentUser = async (
       return;
     }
 
-    const {
-      email,
-      username,
-      password,
-      firstName,
-      lastName,
-      website,
-      facebook,
-      x,
-      instagram,
-      youtube,
-    } = req.body;
+    // if (username && username === user.username) {
+    //   res.status(400).json({
+    //     code: 'UsernameUnchanged',
+    //     message: 'Username is already your current username',
+    //   });
+    //   return;
+    // }
 
     const normalizedEmail = email?.trim().toLowerCase();
 
-    if (username && username === user.username) {
-      res.status(400).json({
-        code: 'UsernameUnchanged',
-        message: 'Username is already your current username',
-      });
-      return;
-    }
-
-    if (normalizedEmail && normalizedEmail === user.email) {
-      res.status(400).json({
-        code: 'EmailUnchanged',
-        message: 'Email is already your current email',
-      });
-      return;
-    }
+    // if (normalizedEmail && normalizedEmail === user.email) {
+    //   res.status(400).json({
+    //     code: 'EmailUnchanged',
+    //     message: 'Email is already your current email',
+    //   });
+    //   return;
+    // }
 
     if (username) {
       const usernameExists = await User.exists({
@@ -80,11 +78,11 @@ export const updateCurrentUser = async (
       }
     }
 
-    if (normalizedEmail) user.email = normalizedEmail;
     if (username) user.username = username;
+    if (normalizedEmail) user.email = normalizedEmail;
     if (password) user.password = password;
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
+    if (first_name) user.firstName = first_name;
+    if (last_name) user.lastName = last_name;
     if (!user.socialLinks) user.socialLinks = {};
 
     if (website) user.socialLinks.website = website;
@@ -97,16 +95,10 @@ export const updateCurrentUser = async (
 
     logger.info('Current user updated successfully', { userId });
 
-    res.json({
+    res.status(200).json({
       code: 'UpdateCurrentUserSuccess',
       message: 'Current user updated successfully',
-      data: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-      },
+      user,
     });
   } catch (err) {
     logger.error('Update current user error', {

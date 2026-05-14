@@ -5,7 +5,7 @@ import multer from 'multer';
 import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
 import uploadBlogBanner from '@/middlewares/uploadBlogBanner';
-import { validationErrorHandler } from '@/middlewares/validationError';
+import  validationErrorHandler  from '@/middlewares/validationErrorHandler';
 import {
   blogIdParamSchema,
   blogQuerySchema,

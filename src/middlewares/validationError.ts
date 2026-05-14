@@ -1,56 +1,21 @@
-import type { Request, Response, NextFunction, RequestHandler } from 'express';
-import type { ZodTypeAny } from 'zod';
+import { Request, Response, NextFunction } from 'express';
+import { validationResult } from 'express-validator';
 
-type SchemaFactory = (req: Request) => ZodTypeAny | Promise<ZodTypeAny>;
-type ValidationTarget = 'body' | 'params' | 'query';
+export const validationError = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const errors = validationResult(req);
 
-export const validationErrorHandler = (
-  schema: ZodTypeAny | SchemaFactory,
-  target: ValidationTarget = 'body',
-): RequestHandler => {
-  return async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const resolvedSchema =
-        typeof schema === 'function' ? await schema(req) : schema;
+  if (!errors.isEmpty()) {
+    res.status(400).json({
+      code: 'ValidationError',
+      errors: errors.mapped(),
+    });
+    return;
+  }
 
-      const input =
-        target === 'params'
-          ? req.params
-          : target === 'query'
-            ? req.query
-            : req.body;
-
-      const result = await resolvedSchema.safeParseAsync(input);
-
-      if (!result.success) {
-        const errors = result.error.flatten();
-        res.status(400).json({
-          code: 'ValidationError',
-          message: 'Validation failed',
-          errors: {
-            ...errors.fieldErrors,
-            _errors: errors.formErrors,
-          },
-        });
-        return;
-      }
-
-      if (target === 'params') {
-        req.params = result.data as unknown as Request['params'];
-      } else if (target === 'query') {
-        req.query = result.data as unknown as Request['query'];
-      } else {
-        req.body = result.data;
-      }
-      next();
-    } catch (err) {
-      next(err as Error);
-    }
-  };
+  next();
 };
 
-export default validationErrorHandler;

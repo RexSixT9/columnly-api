@@ -6,7 +6,7 @@ import refreshToken from '@/controllers/v1/auth/refresh_token';
 import { logout } from '@/controllers/v1/auth/logout';
 import { authenticate } from '@/middlewares/authenticate';
 
-import validationErrorHandler from '@/middlewares/validationError';
+import validationErrorHandler from '@/middlewares/validationErrorHandler';
 
 const router = Router();
 

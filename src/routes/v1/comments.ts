@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
-import { validationErrorHandler } from '@/middlewares/validationError';
+import validationErrorHandler from '@/middlewares/validationErrorHandler';
 import { createComments } from '@/controllers/v1/comments/create_comment';
 import { blogIdParamSchema } from '@/validators/blog';
 import { getCommentsByBlog } from '@/controllers/v1/comments/get_comments_by_blog';
