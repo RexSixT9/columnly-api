@@ -10,7 +10,7 @@ export const updateCurrentUser = async (
     const userId = req.userId;
 
     const user = await User.findById(userId)
-      .select('+password -__v') // ✅ include password for updates
+      .select('+password -__v')
       .exec();
 
     if (!user) {
@@ -25,8 +25,8 @@ export const updateCurrentUser = async (
       email,
       username,
       password,
-      first_name,
-      last_name,
+      firstName,
+      lastName,
       website,
       facebook,
       x,
@@ -80,18 +80,11 @@ export const updateCurrentUser = async (
       }
     }
 
-    // ✅ Normalize email
     if (normalizedEmail) user.email = normalizedEmail;
-
     if (username) user.username = username;
-
-    // ⚠️ Ensure hashing exists in model!
     if (password) user.password = password;
-
-    if (first_name) user.firstName = first_name;
-    if (last_name) user.lastName = last_name;
-
-    // ✅ Clean socialLinks update
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
     if (!user.socialLinks) user.socialLinks = {};
 
     if (website) user.socialLinks.website = website;
@@ -109,6 +102,8 @@ export const updateCurrentUser = async (
       message: 'Current user updated successfully',
       data: {
         id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         username: user.username,
         email: user.email,
       },
