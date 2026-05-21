@@ -12,30 +12,15 @@ interface QueryType {
 const getAllBlogs = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
-    const parsedLimit = parseInt(req.query.limit as string, 10);
-    const parsedOffset = parseInt(req.query.offset as string, 10);
-
-    const limit = !Number.isNaN(parsedLimit)
-      ? parsedLimit
-      : config.defaultResLimit;
-    const offset = !Number.isNaN(parsedOffset)
-      ? parsedOffset
-      : config.defaultResOffset;
+    const limit = parseInt(req.query.limit as string) || config.defaultResLimit;
+    const offset =
+      parseInt(req.query.offset as string) || config.defaultResOffset;
 
     const query: QueryType = {};
     const user = await User.findById(userId).select('role').lean().exec();
 
-    if (limit < 1 || limit > 50 || offset < 0) {
-      res.status(400).json({
-        code: 'InvalidPaginationParameters',
-        message:
-          'Limit must be between 1 and 50, and offset must be non-negative',
-      });
-      return;
-    }
-
     // Show only the published post to a normal user.
-    if (!user ||user.role === 'user') {
+    if (!user || user.role === 'user') {
       query.status = 'published';
     }
 
