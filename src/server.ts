@@ -82,5 +82,5 @@ const handleServerShutdown = async () => {
   }
 };
 
-process.on('SIGINT', handleServerShutdown);
-process.on('SIGTERM', handleServerShutdown);
+process.on('SIGINT', handleServerShutdown); // Handle Ctrl+C signal for graceful shutdown
+process.on('SIGTERM', handleServerShutdown); // Handle termination signal for graceful shutdown
