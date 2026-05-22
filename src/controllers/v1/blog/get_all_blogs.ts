@@ -5,6 +5,7 @@ import Blog from '@/models/blog';
 import User from '@/models/user';
 
 import type { Request, Response } from 'express';
+
 interface QueryType {
   status?: 'draft' | 'published';
 }
@@ -40,11 +41,13 @@ const getAllBlogs = async (req: Request, res: Response) => {
       total,
       blogs,
     });
+
   } catch (err) {
     logger.error('Error while fetching blogs', err);
     res.status(500).json({
       code: 'ServerError',
       message: 'Internal server error while fetching blogs',
+      error: err,
     });
   }
 };

@@ -1,14 +1,14 @@
 import { Router } from 'express';
+import { query, param } from 'express-validator';
 import multer from 'multer';
 
 // middlewares
 import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
 import uploadBlogBanner from '@/middlewares/uploadBlogBanner';
-import  validationErrorHandler  from '@/middlewares/validationErrorHandler';
+import validationErrorHandler from '@/middlewares/validationErrorHandler';
 import {
   blogIdParamSchema,
-  blogQuerySchema,
   createBlogSchema,
   updateBlogSchema,
 } from '@/validators/blog';
@@ -21,6 +21,7 @@ import getBlogsByUserId from '@/controllers/v1/blog/get_blogs_by_user';
 import getBlogsBySlug from '@/controllers/v1/blog/get_blogs_by_slug';
 import updateBlog from '@/controllers/v1/blog/update_blog';
 import { deleteBlog } from '@/controllers/v1/blog/delete_blog';
+import { validationError } from '@/middlewares/validationError';
 
 const upload = multer();
 
@@ -38,20 +39,49 @@ router.post(
 
 router.get(
   '/',
-  authenticate,
-  authorize(['admin', 'user']),
-  validationErrorHandler(blogQuerySchema),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be between 1 to 50'),
+  query('offset')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Page must be a positive integer'),
+  validationError,
   getAllBlogs,
 );
 
 router.get(
   '/user/:userId',
-  authenticate,
-  authorize(['admin', 'user']),
-  validationErrorHandler(userIdParamSchema, 'params'),
-  validationErrorHandler(blogQuerySchema),
+  param('userId').isMongoId().withMessage('Invalid user ID'),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be between 1 to 50'),
+  query('offset')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Page must be a positive integer'),
+  validationError,
   getBlogsByUserId,
 );
+
+// router.get(
+//   '/',
+//   authenticate,
+//   authorize(['admin', 'user']),
+//   validationErrorHandler(blogQuerySchema),
+//   getAllBlogs,
+// );
+
+// router.get(
+//   '/user/:userId',
+//   authenticate,
+//   authorize(['admin', 'user']),
+//   validationErrorHandler(userIdParamSchema, 'params'),
+//   validationErrorHandler(blogQuerySchema),
+//   getBlogsByUserId,
+// );
 
 router.get(
   '/:slug',

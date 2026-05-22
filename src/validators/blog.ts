@@ -50,20 +50,7 @@ export const updateBlogSchema = z
     message: 'At least one field must be provided for update',
   });
 
-export const blogQuerySchema = z.object({
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : undefined))
-    .pipe(z.number().int().positive().max(100).optional()),
-  offset: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : undefined))
-    .pipe(z.number().int().min(0).optional()),
-  status: z.enum(['draft', 'published']).optional(),
-});
+
 
 export type CreateBlogInput = z.infer<typeof createBlogSchema>;
 export type UpdateBlogInput = z.infer<typeof updateBlogSchema>;
-export type BlogQueryInput = z.infer<typeof blogQuerySchema>;
