@@ -86,7 +86,6 @@ router.get(
 router.get(
   '/:slug',
   authenticate,
-  // authorize(['admin', 'user']),
   param('slug').notEmpty().withMessage('Slug is required'),
   validationError,
   getBlogsBySlug,
@@ -126,7 +125,6 @@ router.delete(
   '/:blogId',
   authenticate,
   authorize(['admin']),
-  validationErrorHandler(blogIdParamSchema, 'params'),
   deleteBlog,
 );
 
