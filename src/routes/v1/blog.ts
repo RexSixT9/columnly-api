@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { query, param } from 'express-validator';
+import { body, query, param } from 'express-validator';
 import multer from 'multer';
 
 // middlewares
@@ -86,18 +86,39 @@ router.get(
 router.get(
   '/:slug',
   authenticate,
-  authorize(['admin', 'user']),
+  // authorize(['admin', 'user']),
+  param('slug').notEmpty().withMessage('Slug is required'),
+  validationError,
   getBlogsBySlug,
 );
 
+// router.put(
+//   '/:blogId',
+//   authenticate,
+//   authorize(['admin']),
+//   validationErrorHandler(blogIdParamSchema, 'params'),
+//   upload.single('banner_image'),
+//   uploadBlogBanner('put'),
+//   validationErrorHandler(updateBlogSchema),
+//   updateBlog,
+// );
+
 router.put(
-  '/:blogId',
+  '/:slug',
   authenticate,
   authorize(['admin']),
-  validationErrorHandler(blogIdParamSchema, 'params'),
   upload.single('banner_image'),
   uploadBlogBanner('put'),
-  validationErrorHandler(updateBlogSchema),
+  body('title')
+    .optional()
+    .isLength({ max: 180 })
+    .withMessage('Title must be less than 180 characters'),
+  body('content'),
+  body('status')
+    .optional()
+    .isIn(['draft', 'published'])
+    .withMessage('Status must be one of the value, draft or published'),
+  validationError,
   updateBlog,
 );
 

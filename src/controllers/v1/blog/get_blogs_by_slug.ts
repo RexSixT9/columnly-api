@@ -1,9 +1,9 @@
 import { logger } from '@/lib/winston';
-import type { Request, Response } from 'express';
 
 import Blog from '@/models/blog';
 import User from '@/models/user';
 
+import type { Request, Response } from 'express';
 const getBlogsBySlug = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
@@ -40,10 +40,7 @@ const getBlogsBySlug = async (req: Request, res: Response) => {
       });
       return;
     }
-
-    logger.info(
-      `Blogs with slug ${slug} fetched successfully by user ID ${userId}`,
-    );
+    
     res.status(200).json({ blog });
   } catch (error) {
     logger.error('Error fetching blogs by slug', { error });
