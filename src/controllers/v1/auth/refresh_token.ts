@@ -16,7 +16,7 @@ const refreshToken = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken as string;
   if (!refreshToken) {
     res.status(401).json({
-      code: 'NoToken',
+      code: 'NoToken1',
       message: 'Refresh token is required',
     });
     return;
