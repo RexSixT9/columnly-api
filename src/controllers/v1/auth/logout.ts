@@ -1,27 +1,21 @@
-//current file: src/controllers/v1/auth/logout.ts
-
 import { logger } from '@/lib/winston';
 import config from '@/config';
 import Token from '@/models/tokens';
 
-
 import type { Request, Response } from 'express';
 
-const logout = async (req: Request, res: Response): Promise<void> => {
+const logout = async (req: Request, res: Response) => {
   try {
-    const token = req.cookies?.refreshToken as string;
+    const refreshToken = req.cookies?.refreshToken as string;
 
-    if (!token) {
-      res.status(400).json({
-        code: 'NoToken',
-        message: 'Refresh token is required for logout',
+    if (refreshToken) {
+      await Token.deleteOne({ token: refreshToken });
+
+      logger.info('User refresh token deleted successfully', {
+        userId: req.userId,
+        refreshToken,
       });
-      return;
     }
-
-    await Token.deleteOne({ token });
-
-    logger.info('Refresh token invalidated during logout');
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
@@ -31,11 +25,12 @@ const logout = async (req: Request, res: Response): Promise<void> => {
 
     res.sendStatus(204);
 
-    logger.info('Logout successful');
-  } catch (err) {
-    logger.error('Logout error', {
-      error: err instanceof Error ? err.message : err,
+    logger.info('User logged out successfully', {
+      userId: req.userId,
     });
+  } catch (err) {
+    logger.error('Error during logout', err);
+    
     res.status(500).json({
       code: 'ServerError',
       message: 'An error occurred while processing your request',
