@@ -9,11 +9,15 @@ export const genSlug = (title: string): string => {
   const slug = title
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]\s-/g, '')
+    // remove characters that are not letters, numbers, spaces or hyphens
+    .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
 
-  const randomChars = Math.random().toString(36).slice(8);
+  // generate a short random suffix (6 characters)
+  const randomChars = Math.random().toString(36).slice(2, 8);
+
+  // ensure the slug is URI friendly
   const slugUri = encodeURIComponent(slug);
   const uniqueSlug = `${slugUri}-${randomChars}`;
 
