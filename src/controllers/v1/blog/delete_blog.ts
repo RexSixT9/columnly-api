@@ -6,7 +6,7 @@ import type { Request, Response } from 'express';
 import Blog from '@/models/blog';
 import User from '@/models/user';
 
-export const deleteBlog = async (req: Request, res: Response) => {
+const deleteBlog = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
     const { blogId } = req.params;
@@ -45,6 +45,11 @@ export const deleteBlog = async (req: Request, res: Response) => {
     logger.error(`Error deleting blog: ${error}`);
     res
       .status(500)
-      .json({ code: 'InternalServerError', message: 'An unexpected error occurred while deleting the blog' });
+      .json({
+        code: 'InternalServerError',
+        message: 'An unexpected error occurred while deleting the blog',
+      });
   }
 };
+
+export default deleteBlog;

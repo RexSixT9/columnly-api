@@ -7,35 +7,20 @@ import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
 import uploadBlogBanner from '@/middlewares/uploadBlogBanner';
 import validationErrorHandler from '@/middlewares/validationErrorHandler';
-import {
-  blogIdParamSchema,
-  createBlogSchema,
-  updateBlogSchema,
-} from '@/validators/blog';
-import { userIdParamSchema } from '@/validators/user';
+import { createBlogSchema } from '@/validators/blog';
 
 // controllers
 import createBlog from '@/controllers/v1/blog/create_blog';
 import getAllBlogs from '@/controllers/v1/blog/get_all_blogs';
 import getBlogsByUserId from '@/controllers/v1/blog/get_blogs_by_user';
-import { getBlogsBySlug } from '@/controllers/v1/blog/get_blogs_by_slug';
+import getBlogsBySlug from '@/controllers/v1/blog/get_blogs_by_slug';
 import updateBlog from '@/controllers/v1/blog/update_blog';
-import { deleteBlog } from '@/controllers/v1/blog/delete_blog';
+import deleteBlog from '@/controllers/v1/blog/delete_blog';
 import { validationError } from '@/middlewares/validationError';
 
 const upload = multer();
 
 const router = Router();
-
-router.post(
-  '/',
-  authenticate,
-  authorize(['admin']),
-  upload.single('banner_image'),
-  uploadBlogBanner('post'),
-  validationErrorHandler(createBlogSchema),
-  createBlog,
-);
 
 router.get(
   '/',
@@ -51,8 +36,19 @@ router.get(
   getAllBlogs,
 );
 
+router.post(
+  '/',
+  authenticate,
+  authorize(['admin']),
+  upload.single('banner_image'),
+  uploadBlogBanner('post'),
+  validationErrorHandler(createBlogSchema),
+  createBlog,
+);
+
 router.get(
   '/user/:userId',
+  authenticate,
   param('userId').isMongoId().withMessage('Invalid user ID'),
   query('limit')
     .optional()
@@ -85,7 +81,6 @@ router.get(
 
 router.get(
   '/:slug',
-  authenticate,
   param('slug').notEmpty().withMessage('Slug is required'),
   validationError,
   getBlogsBySlug,
