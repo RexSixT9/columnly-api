@@ -4,16 +4,12 @@ import Blog from '@/models/blog';
 import User from '@/models/user';
 
 import type { Request, Response } from 'express';
-const getBlogsBySlug = async (req: Request, res: Response) => {
+
+export const getBlogsBySlug = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
     const slug = req.params.slug;
-
-    if (!slug) {
-      res.status(400).json({ code: 'InvalidSlug', message: 'Invalid slug provided' });
-      return;
-    }
-
+    
     const user = await User.findById(userId).select('role').exec();
 
     const blog = await Blog.findOne({ slug })
@@ -48,4 +44,3 @@ const getBlogsBySlug = async (req: Request, res: Response) => {
   }
 };
 
-export default getBlogsBySlug;

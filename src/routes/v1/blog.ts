@@ -18,7 +18,7 @@ import { userIdParamSchema } from '@/validators/user';
 import createBlog from '@/controllers/v1/blog/create_blog';
 import getAllBlogs from '@/controllers/v1/blog/get_all_blogs';
 import getBlogsByUserId from '@/controllers/v1/blog/get_blogs_by_user';
-import getBlogsBySlug from '@/controllers/v1/blog/get_blogs_by_slug';
+import { getBlogsBySlug } from '@/controllers/v1/blog/get_blogs_by_slug';
 import updateBlog from '@/controllers/v1/blog/update_blog';
 import { deleteBlog } from '@/controllers/v1/blog/delete_blog';
 import { validationError } from '@/middlewares/validationError';
@@ -121,11 +121,6 @@ router.put(
   updateBlog,
 );
 
-router.delete(
-  '/:blogId',
-  authenticate,
-  authorize(['admin']),
-  deleteBlog,
-);
+router.delete('/:blogId', authenticate, authorize(['admin']), deleteBlog);
 
 export default router;
