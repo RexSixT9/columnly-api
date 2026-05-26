@@ -1,10 +1,8 @@
-
 import { logger } from '@/lib/winston';
 import config from '@/config';
-
 import Comment from '@/models/comment';
-
 import type { Request, Response } from 'express';
+
 type RequestQuery = {
   offset: string;
   limit: string;
@@ -36,7 +34,6 @@ const getComments = async (req: Request, res: Response): Promise<void> => {
       message: 'Internal server error',
       error: err,
     });
-
     logger.error('Error retrieving comments', err);
   }
 };

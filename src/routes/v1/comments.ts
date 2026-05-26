@@ -20,6 +20,8 @@ router.post(
   createComments,
 );
 
+router.get('/', authenticate, authorize(['admin']), getComments);
+
 router.get(
   '/blog/:blogId',
   authenticate,
@@ -36,6 +38,5 @@ router.delete(
   deleteComment,
 );
 
-router.get('/', authenticate, authorize(['admin']), getComments);
 
 export default router;
