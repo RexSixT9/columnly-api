@@ -33,7 +33,7 @@ const logout = async (req: Request, res: Response) => {
     
     res.status(500).json({
       code: 'ServerError',
-      message: 'An error occurred while processing your request',
+      message: 'An error occurred while logging out. Please try again later.',
     });
   }
 };

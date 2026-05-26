@@ -8,6 +8,7 @@ import { blogIdParamSchema } from '@/validators/blog';
 import { getCommentsByBlog } from '@/controllers/v1/comments/get_comments_by_blog';
 import { deleteComment } from '@/controllers/v1/comments/delete_comment';
 import { commentIdParamSchema } from '@/validators/comment';
+import getComments from '@/controllers/v1/comments/get_comments';
 
 const router = Router();
 
@@ -34,5 +35,7 @@ router.delete(
   validationErrorHandler(commentIdParamSchema, 'params'),
   deleteComment,
 );
+
+router.get('/', authenticate, authorize(['admin']), getComments);
 
 export default router;
