@@ -19,9 +19,9 @@ const updateBlog = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, content, banner, status } = req.body as UpdateBlogData;
     const userId = req.userId;
-    const { blogId } = req.params;
+    const { slug } = req.params;
 
-    const user = await User.findById(userId).select('role').lean().exec();
+    const user = await User.findById(userId).select('role').exec();
     if (!user) {
       res.status(404).json({
         code: 'UserNotFound',
@@ -30,7 +30,7 @@ const updateBlog = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const blog = await Blog.findById(blogId).select('-__v').exec();
+    const blog = await Blog.findOne({ slug }).select('-__v').exec();
     if (!blog) {
       res.status(404).json({
         code: 'BlogNotFound',
@@ -41,7 +41,7 @@ const updateBlog = async (req: Request, res: Response): Promise<void> => {
 
     if (blog.author !== userId && user.role !== 'admin') {
       logger.warn(
-        `User ${userId} attempted to update blog ${blogId} without permission`,
+        `User ${userId} attempted to update blog ${slug} without permission`,
       );
       res.status(403).json({
         code: 'Forbidden',
@@ -63,12 +63,12 @@ const updateBlog = async (req: Request, res: Response): Promise<void> => {
 
     await blog.save();
 
-    logger.info(`Blog ${blogId} updated successfully by user ${userId}`);
+    logger.info(`Blog ${slug} updated successfully by user ${userId}`);
 
     res.json({
       code: 'Success',
       message: 'Blog updated successfully',
-      data: blog,
+      blog,
     });
   } catch (error) {
     logger.error('Failed to update blog', { error });
