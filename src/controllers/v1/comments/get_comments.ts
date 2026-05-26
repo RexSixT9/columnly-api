@@ -14,8 +14,8 @@ const getComments = async (req: Request, res: Response): Promise<void> => {
 
   try {
     const comments = await Comment.find()
-      .populate('blog', 'banner.url title slug')
-      .populate('user', 'username email firstName lastName')
+      .populate('blogId', 'banner.url title slug')
+      .populate('userId', 'username email firstName lastName')
       .limit(Number(limit))
       .skip(Number(offset))
       .lean()
