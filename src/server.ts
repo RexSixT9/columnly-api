@@ -1,23 +1,18 @@
-// Import dependencies
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import helmet from 'helmet';
 
-// Import configuration
 import config from '@/config';
 import limiter from '@/lib/rate_limit';
 import { connectToDatabase, disconnectFromDatabase } from '@/lib/mongoose';
 import { logger } from '@/lib/winston';
 
-// Import routes
 import v1Routes from '@/routes/v1';
 
-// Import types
 import type { CorsOptions } from 'cors';
 
-// Create Express app
 const app = express();
 
 // CORS configuration
