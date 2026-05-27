@@ -28,8 +28,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
     res.json({
       code: 'GetAllUsersSuccess',
       message: 'All users fetched successfully',
-      data: users,
       total,
+      users,
     });
   } catch (err) {
     logger.error('Get all users error', {
