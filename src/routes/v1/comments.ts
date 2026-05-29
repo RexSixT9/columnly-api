@@ -22,12 +22,17 @@ router.post(
 
 router.get('/', authenticate, authorize(['admin']), getComments);
 
+// router.get(
+//   '/blog/:blogId',
+//   authenticate,
+//   authorize(['admin', 'user']),
+//   validationErrorHandler(blogIdParamSchema, 'params'),
+//   getCommentsByBlog,
+// );
+
 router.get(
-  '/blog/:blogId',
-  authenticate,
-  authorize(['admin', 'user']),
-  validationErrorHandler(blogIdParamSchema, 'params'),
-  getCommentsByBlog,
+  '/blog/:slug', // Route to get all comments associate with the specific blog post
+  getCommentsByBlog, // Controller function that handles the "get comment" logic
 );
 
 router.delete(
