@@ -1,20 +1,25 @@
 import { Schema, model, Types } from 'mongoose';
 
 export interface IComment {
-  blogId: Types.ObjectId;
-  userId: Types.ObjectId;
+  blog: Types.ObjectId;
+  user: Types.ObjectId;
   content: string;
+  likesCount: number;
+  replies: Types.ObjectId[];
 }
 
 const commentSchema = new Schema<IComment>(
   {
-    blogId: { type: Types.ObjectId, required: true },
-    userId: { type: Types.ObjectId, ref: 'User', required: true },
+    blog: { type: Types.ObjectId, ref: 'Blog', required: true },
+
+    user: { type: Types.ObjectId, ref: 'User', required: true },
     content: {
       type: String,
       required: [true, 'Content is required'],
       maxLength: [1000, 'Content must be less than 1000 characters'],
     },
+    likesCount: { type: Number, default: 0 },
+    replies: { type: [Types.ObjectId], ref: 'Comment', default: [] },
   },
   {
     timestamps: true,

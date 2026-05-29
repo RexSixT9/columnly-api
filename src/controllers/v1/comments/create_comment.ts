@@ -22,19 +22,11 @@ export const createComments = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
+  const { content } = req.body as RequestBody;
+  const { blogId } = req.params as RequestParams;
+  const userId = req.userId;
+
   try {
-    const { content } = req.body as RequestBody;
-    const { blogId } = req.params as RequestParams;
-    const userId = req.userId;
-
-    if (!content || content.trim() === '') {
-      res.status(400).json({
-        code: 'ValidationError',
-        message: 'Content is required',
-      });
-      return;
-    }
-
     const blog = await Blog.findById(blogId).select('_id commentsCount').exec();
     if (!blog) {
       res.status(404).json({
@@ -47,12 +39,12 @@ export const createComments = async (
     const cleanContent = purify.sanitize(content);
 
     const newComment = await Comment.create({
-      blogId,
-      userId,
+      blog: blogId,
+      user: userId,
       content: cleanContent,
     });
 
-    blog.commentsCount += 1;
+    blog.commentsCount++;
     await blog.save();
 
     logger.info(`User ${userId} commented on blog ${blogId}`);
@@ -60,7 +52,7 @@ export const createComments = async (
     res.status(201).json({
       code: 'CommentCreated',
       message: 'Comment created successfully',
-      data: newComment,
+      comment: newComment,
     });
   } catch (err) {
     logger.error(`Error in createComments: ${err}`);

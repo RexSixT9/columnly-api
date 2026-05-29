@@ -4,27 +4,28 @@ import Blog from '@/models/blog';
 import Comment from '@/models/comment';
 
 import type { Request, Response } from 'express';
-import type { IComment } from '@/models/comment';
 
-export const getCommentsByBlog = async (req: Request, res: Response) => {
+export const getCommentsByBlog = async (req: Request, res: Response): Promise<void> => {
+
+  const { slug } = req.params;
   try {
-    const { blogId } = req.params as { blogId: string };
+    const blog = await Blog.findOne({ slug }).select('_id').exec();
 
-    const blog = await Blog.findById(blogId).select('_id').lean().exec();
     if (!blog) {
       res.status(404).json({
-        code: 'BlogNotFound',
-        message: 'Blog not found',
+        code: 'NotFound',
+        message: 'Blog not found!',
       });
       return;
     }
 
-    const comments = await Comment.find({ blogId })
-      .sort({ createdAt: -1 })
+    const allComments = await Comment.find({ blog: blog._id })
+      .populate('blog', 'banner.url title slug')
+      .populate('user', 'username firstName lastName')
       .lean()
       .exec();
-
-    if (!comments || comments.length === 0) {
+  
+    if (!allComments || allComments.length === 0) {
       res.status(404).json({
         code: 'CommentsNotFound',
         message: 'No comments found for this blog',
@@ -35,7 +36,7 @@ export const getCommentsByBlog = async (req: Request, res: Response) => {
     res.status(200).json({
       code: 'CommentsFound',
       message: 'Comments found successfully',
-      data: comments,
+      comments: allComments,
     });
   } catch (err) {
     logger.error(`Error in getCommentsByBlog: ${err}`);

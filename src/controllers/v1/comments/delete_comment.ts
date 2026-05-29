@@ -14,18 +14,13 @@ export const deleteComment = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
+  const currentUserId = req.userId;
+  const { commentId } = req.params as DeleteCommentParams;
   try {
-    const currentUserId = req.userId;
-    const { commentId } = req.params as DeleteCommentParams;
-
     const comment = await Comment.findById(commentId)
-      .select('userId blogId')
-      .lean()
+      .select('user blog')
       .exec();
-    const user = await User.findById(currentUserId)
-      .select('role')
-      .lean()
-      .exec();
+    const user = await User.findById(currentUserId).select('role').exec();
 
     if (!comment) {
       res.status(404).json({
@@ -35,7 +30,7 @@ export const deleteComment = async (
       return;
     }
 
-    if (comment.userId !== currentUserId && user?.role !== 'admin') {
+    if (comment.user !== currentUserId && user?.role !== 'admin') {
       logger.warn(
         `User ${currentUserId} attempted to delete comment ${commentId} without permission`,
       );
@@ -46,10 +41,13 @@ export const deleteComment = async (
       return;
     }
 
-    await Comment.findByIdAndDelete(commentId).exec();
-    logger.info(`Comment ${commentId} deleted by user ${currentUserId}`);
+    await comment.deleteOne({ _id: commentId });
 
-    const blog = await Blog.findById(comment.blogId)
+    logger.info('Comment deleted successfully', {
+      commentId,
+    });
+
+    const blog = await Blog.findById(comment.blog)
       .select('commentsCount')
       .exec();
 
