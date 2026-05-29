@@ -14,9 +14,9 @@ const getBlogsByUserId = async (req: Request, res: Response): Promise<void> => {
     const currentUserId = req.userId;
 
     const limit =
-      parseInt(req.query.limit as string, 10) || config.defaultResLimit;
+      parseInt(req.query.limit as string) || config.defaultResLimit;
     const offset =
-      parseInt(req.query.offset as string, 10) || config.defaultResOffset;
+      parseInt(req.query.offset as string) || config.defaultResOffset;
 
     const query: QueryType = {};
     const userId = req.params.userId;
@@ -41,7 +41,6 @@ const getBlogsByUserId = async (req: Request, res: Response): Promise<void> => {
     }
 
     const total = await Blog.countDocuments({ author: userId, ...query });
-
     const blogs = await Blog.find({ author: userId, ...query })
       .select('-banner.publicId -__v')
       .populate('author', '-createdAt -updatedAt -__v')

@@ -10,6 +10,7 @@ const getBlogBySlug = async (req: Request, res: Response) => {
     const userId = req.userId;
     const slug = req.params.slug;
 
+    const user = await User.findById(userId).select('role').exec();
     const blog = await Blog.findOne({ slug })
       .select('-banner.publicId -__v')
       .populate('author', '-createdAt -updatedAt -__v')
@@ -25,30 +26,45 @@ const getBlogBySlug = async (req: Request, res: Response) => {
     }
 
     // Draft blogs are only viewable by the author or admins.
-    if (blog.status === 'draft') {
-      if (!userId) {
-        res.status(401).json({
-          code: 'AuthenticationError',
-          message: 'Access token is required',
-        });
-        return;
-      }
+    // if (blog.status === 'draft') {
+    //   if (!userId) {
+    //     res.status(401).json({
+    //       code: 'AuthenticationError',
+    //       message: 'Access token is required',
+    //     });
+    //     return;
+    //   }
 
-      const user = await User.findById(userId).select('role').exec();
+    //   const user = await User.findById(userId).select('role').exec();
 
-      const isAuthor = blog.author && String((blog.author as any)._id || blog.author) === String(userId);
-      if (user?.role !== 'admin' && !isAuthor) {
-        res.status(403).json({
-          code: 'AuthorizationError',
-          message: 'Access denied, insufficient permissions',
-        });
+    //   const isAuthor =
+    //     blog.author &&
+    //     String((blog.author as any)._id || blog.author) === String(userId);
+    //   if (user?.role !== 'admin' && !isAuthor) {
+    //     res.status(403).json({
+    //       code: 'AuthorizationError',
+    //       message: 'Access denied, insufficient permissions',
+    //     });
 
-        logger.warn('A non-author attempted to access a draft blog', {
-          userId,
-          blog: { slug: blog.slug, status: blog.status },
-        });
-        return;
-      }
+    //     logger.warn('A non-author attempted to access a draft blog', {
+    //       userId,
+    //       blog: { slug: blog.slug, status: blog.status },
+    //     });
+    //     return;
+    //   }
+    // }
+
+    if (user?.role === 'user' && blog.status === 'draft') {
+      res.status(403).json({
+        code: 'AuthorizationError',
+        message: 'Access denied, insufficient permissions',
+      });
+
+      logger.warn('A user tried to access a draft blog', {
+        userId,
+        blog,
+      });
+      return;
     }
 
     res.status(200).json({

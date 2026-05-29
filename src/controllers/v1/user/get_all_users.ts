@@ -15,20 +15,21 @@ export const getAllUsers = async (req: Request, res: Response) => {
         message: 'Limit must be between 1 and 50, and offset must be non-negative',
       });
     }
-    const total = await User.countDocuments().exec();
+    const total = await User.countDocuments();
     const users = await User.find()
       .select('-password -__v')
-      .skip(offset)
       .limit(limit)
+      .skip(offset)
       .lean()
       .exec();
 
-    logger.info('Fetched all users successfully');
 
     res.json({
       code: 'GetAllUsersSuccess',
       message: 'All users fetched successfully',
       total,
+      limit,
+      offset,
       users,
     });
   } catch (err) {

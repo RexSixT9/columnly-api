@@ -57,10 +57,7 @@ export const likeBlog = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json({
       code: 'BlogLiked',
       message: 'Blog liked successfully',
-      data: {
-        blogId: blogObjectId.toHexString(),
-        likesCount: blog.likesCount,
-      },
+      likesCount: blog.likesCount,
     });
   } catch (err) {
     logger.error('Error liking blog', { error: err });

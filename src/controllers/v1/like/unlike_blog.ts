@@ -16,7 +16,9 @@ export const unLikeBlog = async (
     const existingLike = await Like.findOne({
       blogId,
       userId,
-    }).exec();
+    })
+      .lean()
+      .exec();
 
     if (!existingLike) {
       res.status(400).json({
@@ -26,7 +28,7 @@ export const unLikeBlog = async (
       return;
     }
 
-    await existingLike.deleteOne({ _id: existingLike._id });
+    await Like.deleteOne({ _id: existingLike._id });
 
     const blog = await Blog.findById(blogId).select('likesCount').exec();
     if (!blog) {
@@ -45,10 +47,6 @@ export const unLikeBlog = async (
     res.status(200).json({
       code: 'BlogUnliked',
       message: 'Blog unliked successfully',
-      data: {
-        blogId,
-        likesCount: blog.likesCount,
-      },
     });
   } catch (error) {
     logger.error('Error unliking blog', { error });

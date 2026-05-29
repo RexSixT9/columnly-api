@@ -20,7 +20,7 @@ export const getUser = async (req: Request, res: Response) => {
     res.status(200).json({
       code: 'Success',
       message: 'User fetched successfully',
-      data: user,
+      user,
     });
   } catch (error) {
     logger.error(`Error in getUser: ${error}`);

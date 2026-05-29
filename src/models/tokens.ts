@@ -8,7 +8,7 @@ interface IToken {
 const tokenSchema = new Schema<IToken>(
   {
     userId: {
-      type: Types.ObjectId,
+      type: Schema.Types.ObjectId,
       required: [true, 'User ID is required'],
     },
     token: {

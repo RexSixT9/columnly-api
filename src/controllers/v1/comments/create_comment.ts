@@ -22,8 +22,9 @@ export const createComments = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { content } = req.body as RequestBody;
+
   const { blogId } = req.params as RequestParams;
+  const { content } = req.body as RequestBody;
   const userId = req.userId;
 
   try {

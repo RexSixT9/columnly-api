@@ -16,8 +16,6 @@ export interface IUser {
     x?: string;
     youtube?: string;
   };
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const userSchema = new Schema<IUser>(
