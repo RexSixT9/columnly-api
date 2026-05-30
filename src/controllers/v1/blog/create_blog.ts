@@ -18,11 +18,10 @@ const createBlog = async (req: Request, res: Response)=> {
     const { title, content, banner, status } = req.body as BlogData;
     const userId = req.userId;
 
-    const sanitizedTitle = purify.sanitize(title);
     const sanitizedContent = purify.sanitize(content);
 
     const newBlog = await Blog.create({
-      title: sanitizedTitle,
+      title,
       content: sanitizedContent,
       banner,
       status,
@@ -34,13 +33,14 @@ const createBlog = async (req: Request, res: Response)=> {
     res.status(201).json({
       code: 'BlogCreated',
       message: 'Blog created successfully',
-      data: newBlog,
+      blog: newBlog,
     });
   } catch (error) {
     logger.error(`Error in createBlog: ${error}`);
     res.status(500).json({
       code: 'InternalServerError',
       message: 'An unexpected error occurred while creating the blog',
+      error,
     });
   }
 };
