@@ -38,10 +38,15 @@ const uploadBlogBanner = (method: 'post' | 'put') => {
       let publicId: string | undefined;
 
       if (method === 'put') {
-        const { blogId } = req.params;
-        const blog = await Blog.findById(blogId)
-          .select('banner.publicId')
-          .exec();
+        const { blogId, slug } = req.params as { blogId?: string; slug?: string };
+
+        let blog: any = null;
+
+        if (blogId) {
+          blog = await Blog.findById(blogId).select('banner.publicId').exec();
+        } else if (slug) {
+          blog = await Blog.findOne({ slug }).select('banner.publicId').exec();
+        }
 
         if (!blog) {
           res.status(404).json({
