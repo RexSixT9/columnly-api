@@ -328,8 +328,8 @@ List endpoints accept `limit` (1–50) and `offset` (0 or greater). Responses in
 | `DELETE` | `/users/:userId` | Admin | Delete a user |
 
 `PUT /users/current` accepts any of: `username`, `email`, `password`, `first_name`,
-`last_name`, `website`, `facebook`, `instagram`, `x`, `youtube`. At least one field is
-expected; email and username must remain unique.
+`last_name`, `website`, `facebook`, `instagram`, `x`, `youtube`. Every field is optional;
+omitted fields keep their current value, and email and username must stay unique.
 
 ### Blogs — `/blogs`
 
