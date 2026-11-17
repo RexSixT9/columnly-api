@@ -2,7 +2,7 @@
 
 <h3>Columnly API</h3>
 
-<p>The REST backend for <a href="https://github.com/RexSixT9/columnly">Columnly</a> — a full-stack<br>
+<p>The REST backend for <a href="https://github.com/RexSixT9/columnly-frontend">Columnly</a> — a full-stack<br>
 blogging platform with articles, comments, likes, media uploads and moderation.</p>
 
 [![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com)
@@ -215,7 +215,7 @@ Any admin registration attempt from a non-whitelisted email is rejected with `40
 
 ### 5. Connect the frontend
 
-Run the [Columnly web client](https://github.com/RexSixT9/columnly) and point
+Run the [Columnly web client](https://github.com/RexSixT9/columnly-frontend) and point
 `VITE_API_BASE_URL` at `http://localhost:3000/api/v1`.
 
 ## Environment variables
@@ -551,6 +551,6 @@ Released under the [Apache License 2.0](LICENSE).
 
 <div align="center">
 
-Frontend repository: [RexSixT9/columnly](https://github.com/RexSixT9/columnly)
+Frontend repository: [RexSixT9/columnly-frontend](https://github.com/RexSixT9/columnly-frontend)
 
 </div>
