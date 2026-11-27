@@ -10,8 +10,10 @@ import { connectToDatabase, disconnectFromDatabase } from '@/lib/mongoose';
 import { logger } from '@/lib/winston';
 
 import v1Routes from '@/routes/v1';
+import healthRoutes from '@/routes/health';
 
 import type { CorsOptions } from 'cors';
+import type { ErrorRequestHandler } from 'express';
 
 const app = express();
 
@@ -51,11 +53,39 @@ app.use(
 app.use(helmet()); // Set security-related HTTP headers
 app.use(limiter); // Apply rate limiting to all requests
 
+// Routes
+app.use('/health', healthRoutes); // Liveness/readiness probe (unversioned)
+app.use('/api/v1', v1Routes);
+
+// 404 handler for unmatched routes
+app.use((req, res) => {
+  logger.warn(`Route not found: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    status: 'error',
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+// Centralised error handler (e.g. CORS rejections, unexpected failures)
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  const message = err instanceof Error ? err.message : 'Internal server error';
+
+  if (message.startsWith('CORS Error')) {
+    logger.warn(message);
+    res.status(403).json({ status: 'error', message });
+    return;
+  }
+
+  logger.error('Unhandled error:', err);
+  res.status(500).json({ status: 'error', message: 'Internal server error' });
+};
+
+app.use(errorHandler);
+
 // Start the server
 (async () => {
   try {
     await connectToDatabase();
-    app.use('/api/v1', v1Routes);
     app.listen(config.port, () => {
       logger.info(`Server is running on port ${config.port}`);
     });

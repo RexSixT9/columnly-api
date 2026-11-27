@@ -7,12 +7,13 @@ const config = {
   port: process.env.PORT || 3000,
   nodeEnv: process.env.NODE_ENV!,
   logLevel: process.env.LOG_LEVEL || 'info',
-  whiteListedOrigins: [
-    'localhost:3000',
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:3000',
-  ],
+  whiteListedOrigins: (
+    process.env.WHITE_LISTED_ORIGINS ??
+    'http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000'
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   MONGO_URI: process.env.MONGO_URI!,
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET!,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET!,

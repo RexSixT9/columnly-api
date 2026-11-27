@@ -194,6 +194,7 @@ MongoDB connection succeeds. Verify it:
 
 ```bash
 curl http://localhost:3000/api/v1
+curl http://localhost:3000/health
 ```
 
 ```json
@@ -224,7 +225,7 @@ Run the [Columnly web client](https://github.com/RexSixT9/columnly-frontend) and
 | --- | :---: | --- | --- |
 | `PORT` | No | `3000` | Port the HTTP server listens on. |
 | `NODE_ENV` | **Yes** | — | `development`, `production` or `test`. |
-| `WHITE_LISTED_ORIGINS` | No | — | Reserved for CORS origins; the active allow-list is in `src/config/index.ts`. |
+| `WHITE_LISTED_ORIGINS` | No | `http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000` | Comma-separated list of origins allowed by CORS. Add your deployed frontend origin before shipping to production. |
 | `MONGO_URI` | **Yes** | — | MongoDB connection string. |
 | `LOG_LEVEL` | No | `info` | Winston log level. |
 | `JWT_ACCESS_SECRET` | **Yes** | — | Secret for signing access tokens. |
@@ -236,9 +237,8 @@ Run the [Columnly web client](https://github.com/RexSixT9/columnly-frontend) and
 | `CLOUDINARY_API_KEY` | **Yes** | — | Cloudinary API key. |
 | `CLOUDINARY_API_SECRET` | **Yes** | — | Cloudinary API secret. |
 
-> **CORS note:** the allow-list used by the server is currently defined in
-> `src/config/index.ts`. Add your deployed frontend origin there before shipping to
-> production.
+> **CORS note:** in development every origin is accepted. In production the allow-list
+> comes from `WHITE_LISTED_ORIGINS`; requests from other origins are rejected with `403`.
 
 ## API conventions
 
@@ -305,7 +305,8 @@ List endpoints accept `limit` (1–50) and `offset` (0 or greater). Responses in
 
 | Method | Endpoint | Access | Description |
 | --- | --- | --- | --- |
-| `GET` | `/` | Public | Health/version response |
+| `GET` | `/health` | Public | Liveness/readiness probe; `503` when the database is disconnected |
+| `GET` | `/api/v1` | Public | Welcome/version response |
 
 ### Auth — `/auth`
 

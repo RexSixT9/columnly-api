@@ -7,7 +7,7 @@ services:
     # dev deps must be installed even when NODE_ENV=production is set.
     buildCommand: 'npm install --include=dev && npm run build'
     startCommand: 'npm start'
-    healthCheckPath: /api/v1
+    healthCheckPath: /health
     envVars:
       # Render sets NODE_ENV=production and PORT at runtime automatically.
       - key: MONGO_URI
