@@ -30,7 +30,8 @@ export const deleteComment = async (
       return;
     }
 
-    if (comment.user !== currentUserId && user?.role !== 'admin') {
+    const isOwner = String(comment.user) === String(currentUserId);
+    if (!isOwner && user?.role !== 'admin') {
       logger.warn(
         `User ${currentUserId} attempted to delete comment ${commentId} without permission`,
       );
@@ -59,7 +60,7 @@ export const deleteComment = async (
       return;
     }
 
-    blog.commentsCount--;
+    blog.commentsCount = Math.max(0, blog.commentsCount - 1);
     await blog.save();
 
     logger.info(

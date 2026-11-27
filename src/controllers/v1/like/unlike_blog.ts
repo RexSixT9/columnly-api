@@ -39,7 +39,7 @@ export const unLikeBlog = async (
       return;
     }
 
-    blog.likesCount--;
+    blog.likesCount = Math.max(0, blog.likesCount - 1);
     await blog.save();
 
     logger.info(`User ${userId} unliked blog ${blogId}`);
@@ -47,6 +47,7 @@ export const unLikeBlog = async (
     res.status(200).json({
       code: 'BlogUnliked',
       message: 'Blog unliked successfully',
+      likesCount: blog.likesCount,
     });
   } catch (error) {
     logger.error('Error unliking blog', { error });
