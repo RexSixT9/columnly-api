@@ -7,7 +7,7 @@ import { getCurrentUser } from '@/controllers/v1/user/get_current_user';
 import { updateCurrentUser } from '@/controllers/v1/user/update_current_user';
 import { validationError } from '@/middlewares/validationError';
 import  validationErrorHandler  from '@/middlewares/validationErrorHandler';
-import { deleteCurrentUser } from '@/controllers/v1/user/delete_current _user';
+import { deleteCurrentUser } from '@/controllers/v1/user/delete_current_user';
 import { getAllUsers } from '@/controllers/v1/user/get_all_users';
 import { getUser } from '@/controllers/v1/user/get_user';
 import { deleteUser } from '@/controllers/v1/user/delete_user';

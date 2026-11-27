@@ -508,7 +508,9 @@ curl -X POST http://localhost:3000/api/v1/auth/refresh-token \
 ## Deployment
 
 1. Create a production MongoDB Atlas cluster and a Cloudinary account.
-2. Set every variable from `.env.example` with `NODE_ENV=production`.
+2. Add every variable from `.env.example` to your host's environment settings. Don't set
+   `NODE_ENV=production` in a way that applies **during the build** — the build needs
+   devDependencies (`typescript`, `tsc-alias`, `@types/*`). Set it at runtime only.
 3. Build and start:
    ```bash
    npm ci
@@ -518,6 +520,21 @@ curl -X POST http://localhost:3000/api/v1/auth/refresh-token \
 4. Terminate TLS at a reverse proxy such as Nginx or Caddy and forward to `PORT`.
 5. Set the deployed frontend origin in the CORS allow-list in `src/config/index.ts`.
 6. Never commit `.env`; inject secrets through your host's environment settings.
+
+### Render
+
+The repository ships a [`render.yaml`](render.yaml) Blueprint with the correct commands:
+
+| Setting | Value |
+| --- | --- |
+| Build Command | `npm install --include=dev && npm run build` |
+| Start Command | `npm start` |
+| Health Check Path | `/api/v1` |
+
+`--include=dev` is required because `npm install` skips devDependencies whenever
+`NODE_ENV=production` is present in the service environment, which leaves `tsc` missing
+and fails the build with `sh: 1: tsc: not found`. Render already sets
+`NODE_ENV=production` and `PORT` at runtime, so you don't need to add them yourself.
 
 > In production the refresh cookie is marked `secure`, so the client and API must be
 > served over HTTPS for authentication to work.
