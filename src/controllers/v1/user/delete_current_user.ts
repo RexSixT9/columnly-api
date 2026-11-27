@@ -1,8 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
 
 import { logger } from '@/lib/winston';
+import { audit } from '@/lib/audit';
 import User from '@/models/user';
 import Blog from '@/models/blog';
+import Token from '@/models/tokens';
 
 import type { Request, Response } from 'express';
 
@@ -34,7 +36,9 @@ export const deleteCurrentUser = async (req: Request, res: Response) => {
     await Blog.deleteMany({ author: userId });
 
     await user.deleteOne({ _id: userId });
+    await Token.deleteMany({ userId });
 
+    audit('account_deleted', { userId: String(userId) }, 'info');
     logger.info('Current user deleted successfully', { userId });
 
     res.json({

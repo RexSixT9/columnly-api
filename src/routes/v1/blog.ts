@@ -6,6 +6,7 @@ import multer from 'multer';
 import { authenticate } from '@/middlewares/authenticate';
 import { authorize } from '@/middlewares/authorize';
 import uploadBlogBanner from '@/middlewares/uploadBlogBanner';
+import { uploadLimiter } from '@/lib/rate_limit';
 import validationErrorHandler from '@/middlewares/validationErrorHandler';
 import { createBlogSchema } from '@/validators/blog';
 
@@ -18,7 +19,13 @@ import updateBlog from '@/controllers/v1/blog/update_blog';
 import deleteBlog from '@/controllers/v1/blog/delete_blog';
 import { validationError } from '@/middlewares/validationError';
 
-const upload = multer();
+const upload = multer({
+  limits: {
+    fileSize: 2 * 1024 * 1024,
+    files: 1,
+    fields: 10,
+  },
+});
 
 const router = Router();
 
@@ -40,6 +47,7 @@ router.post(
   '/',
   authenticate,
   authorize(['admin']),
+  uploadLimiter,
   upload.single('banner_image'),
   uploadBlogBanner('post'),
   validationErrorHandler(createBlogSchema),
@@ -101,6 +109,7 @@ router.put(
   '/:slug',
   authenticate,
   authorize(['admin']),
+  uploadLimiter,
   upload.single('banner_image'),
   uploadBlogBanner('put'),
   body('title')

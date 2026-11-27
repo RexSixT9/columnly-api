@@ -1,7 +1,10 @@
 import { logger } from '@/lib/winston';
+import { audit } from '@/lib/audit';
+import { setRefreshCookie } from '@/lib/cookies';
 import config from '@/config';
 import { genUsername } from '@/utils';
 import { generateAccessToken, generateRefreshToken } from '@/lib/jwt';
+import hashRefreshToken from '@/lib/token_hash';
 
 import User from '@/models/user';
 import Token from '@/models/tokens';
@@ -14,7 +17,7 @@ type UserData = Pick<IUser, 'email' | 'password' | 'role'>;
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, role } = req.body as UserData;
-    
+
     if (!email || !password) {
       res.status(400).json({
         code: 'InvalidInput',
@@ -39,10 +42,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const username = genUsername();
 
-    const isAdminRequest = role === 'admin';
+    // The assigned role is derived from the allow-list; the request body is
+    // only used to detect a privileged-registration attempt.
     const isWhitelisted = config.whiteListedAdmins.includes(emailNormalized);
+    const requestedAdmin = role === 'admin';
 
-    if (isAdminRequest && config.nodeEnv !== 'production') {
+    if (requestedAdmin && config.nodeEnv !== 'production') {
       logger.info('Admin registration check', {
         email: emailNormalized,
         isWhitelisted,
@@ -50,22 +55,22 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       });
     }
 
-    if (isAdminRequest && (!config.whiteListedAdmins || !isWhitelisted)) {
+    if (requestedAdmin && !isWhitelisted) {
+      audit('admin_registration_denied', { email: emailNormalized });
       res.status(403).json({
         code: 'Unauthorized',
         message: 'You are not authorized to register as an admin',
       });
-      logger.warn(
-        `Unauthorized admin registration attempt: ${emailNormalized}`,
-      );
       return;
     }
+
+    const assignedRole = isWhitelisted ? 'admin' : 'user';
 
     const newUser = new User({
       username,
       email: emailNormalized,
       password,
-      role,
+      role: assignedRole,
     });
 
     await newUser.save();
@@ -75,25 +80,28 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const token = new Token({
       userId: newUser._id,
-      token: refreshToken,
+      token: hashRefreshToken(refreshToken),
     });
 
     await token.save();
-    logger.info(`Saving refresh token for user: ${emailNormalized}`);
+    setRefreshCookie(res, refreshToken);
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'strict',
-    });
+    audit(
+      'register',
+      {
+        userId: newUser._id.toString(),
+        email: emailNormalized,
+        role: assignedRole,
+      },
+      'info',
+    );
 
-    logger.info(`User registered: ${emailNormalized}`);
     res.status(201).json({
       code: 'UserRegistered',
       data: {
         username,
         email: emailNormalized,
-        role,
+        role: assignedRole,
       },
       accessToken,
       message: 'User registered successfully',
@@ -103,7 +111,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       code: 'ServerError',
       message: 'Internal Server Error',
-      error: err,
     });
   }
 };

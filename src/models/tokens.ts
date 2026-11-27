@@ -14,6 +14,7 @@ const tokenSchema = new Schema<IToken>(
     token: {
       type: String,
       required: [true, 'Token is required'],
+      unique: [true, 'Token must be unique'],
     },
   },
   { timestamps: true },

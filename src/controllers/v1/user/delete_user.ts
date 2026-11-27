@@ -1,8 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
 
 import { logger } from '@/lib/winston';
+import { audit } from '@/lib/audit';
 import User from '@/models/user';
 import Blog from '@/models/blog';
+import Token from '@/models/tokens';
 
 import type { Request, Response } from 'express';
 
@@ -33,6 +35,11 @@ export const deleteUser = async (
     }
 
     await User.deleteOne({ _id: userId });
+    await Token.deleteMany({ userId });
+    audit('admin_deleted_user', {
+      userId,
+      adminId: String(req.userId),
+    });
     logger.info('A user account deleted', {
       userId,
     });

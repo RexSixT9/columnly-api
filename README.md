@@ -59,7 +59,7 @@ Request lifecycle:
 1. **CORS** validates the origin and allows credentials.
 2. **Body and cookie parsers** read JSON, URL-encoded forms and the refresh cookie.
 3. **Compression and Helmet** shrink responses and set secure headers.
-4. **Rate limiting** protects the API from abuse.
+4. **Rate limiting** protects the API from abuse: a global 60/min backstop, plus stricter limits on auth and upload routes.
 5. **Authentication and authorization** verify the access token and role.
 6. **Validation** checks params, query strings and bodies before the controller runs.
 7. **Controllers** read or write MongoDB, and upload banners to Cloudinary when needed.
@@ -67,9 +67,11 @@ Request lifecycle:
 ## Features
 
 - JWT access tokens with refresh tokens stored in `httpOnly`, `sameSite: strict` cookies
-- Refresh-token persistence and revocation in MongoDB
+- Refresh-token persistence and revocation in MongoDB (tokens stored as SHA-256 hashes)
+- Refresh-token rotation with reuse detection (reuse revokes all of that user's sessions)
 - Password hashing with bcrypt (cost factor 12)
-- Role-based access control for `user` and `admin`
+- Role-based access control for `user` and `admin`; roles assigned from an allow-list, never from the request body
+- Security audit logging for auth events and admin actions
 - Admin registration restricted by an email allow-list
 - Full blog CRUD with unique, URI-safe slugs
 - Cloudinary banner uploads with a 2 MB limit and image replacement on update
@@ -105,7 +107,7 @@ columnly-api/
 │   │   └── index.ts             # Environment configuration
 │   ├── controllers/
 │   │   └── v1/
-│   │       ├── auth/            # register, login, refresh-token, logout
+│   │       ├── auth/            # register, login, refresh-token, logout, logout-all
 │   │       ├── blog/            # create, read, update, delete, by user, by slug
 │   │       ├── comments/        # create, list, list by blog, delete
 │   │       ├── like/            # like and unlike a blog
@@ -181,7 +183,9 @@ Generate strong JWT secrets, for example:
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
-Use a different secret for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`.
+Use a different secret for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. Both must be at
+least 32 characters; the API refuses to start when required environment variables are
+missing or invalid.
 
 ### 3. Run
 
@@ -210,9 +214,11 @@ curl http://localhost:3000/health
 
 1. Add your email to `WHITELIST_ADMINS` in `.env` (comma-separated for several admins).
 2. Restart the API.
-3. Register with `role: "admin"` using that email.
+3. Register with that email (optionally sending `role: "admin"`).
 
-Any admin registration attempt from a non-whitelisted email is rejected with `403`.
+Whitelisted emails receive the `admin` role automatically; the request body cannot grant it.
+Any explicit `role: "admin"` registration attempt from a non-whitelisted email is rejected
+with `403`.
 
 ### 5. Connect the frontend
 
@@ -226,19 +232,30 @@ Run the [Columnly web client](https://github.com/RexSixT9/columnly-frontend) and
 | `PORT` | No | `3000` | Port the HTTP server listens on. |
 | `NODE_ENV` | **Yes** | — | `development`, `production` or `test`. |
 | `WHITE_LISTED_ORIGINS` | No | `http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000` | Comma-separated list of origins allowed by CORS. Add your deployed frontend origin before shipping to production. |
+| `TRUST_PROXY` | No | `1` hop in production, `false` otherwise | Number of trusted reverse proxies (`0`/`false`, `true`, or a hop count) used to resolve the client IP for rate limiting. |
 | `MONGO_URI` | **Yes** | — | MongoDB connection string. |
 | `LOG_LEVEL` | No | `info` | Winston log level. |
-| `JWT_ACCESS_SECRET` | **Yes** | — | Secret for signing access tokens. |
-| `JWT_REFRESH_SECRET` | **Yes** | — | Secret for signing refresh tokens. |
-| `ACCESS_TOKEN_EXPIRATION` | No | — | Access-token lifetime, e.g. `1h`. |
-| `REFRESH_TOKEN_EXPIRATION` | No | — | Refresh-token lifetime, e.g. `7d`. |
+| `JWT_ACCESS_SECRET` | **Yes** | — | Secret for signing access tokens (at least 32 characters). |
+| `JWT_REFRESH_SECRET` | **Yes** | — | Secret for signing refresh tokens (at least 32 characters). |
+| `ACCESS_TOKEN_EXPIRATION` | No | `15m` | Access-token lifetime, e.g. `15m`. |
+| `REFRESH_TOKEN_EXPIRATION` | No | `7d` | Refresh-token lifetime, e.g. `7d`. |
 | `WHITELIST_ADMINS` | No | empty | Emails allowed to register as admin. |
 | `CLOUDINARY_CLOUD_NAME` | **Yes** | — | Cloudinary cloud name. |
 | `CLOUDINARY_API_KEY` | **Yes** | — | Cloudinary API key. |
 | `CLOUDINARY_API_SECRET` | **Yes** | — | Cloudinary API secret. |
 
-> **CORS note:** in development every origin is accepted. In production the allow-list
-> comes from `WHITE_LISTED_ORIGINS`; requests from other origins are rejected with `403`.
+> **CORS note:** the allow-list comes from `WHITE_LISTED_ORIGINS`. In development any
+> `http://localhost:*` or `http://127.0.0.1:*` origin is also accepted; all other origins
+> are rejected with `403` in every environment.
+
+> **Rate-limit note:** limits are keyed by client IP and stored in memory, so they reset on
+> restart and are not shared between instances. When the API runs behind a reverse proxy,
+> set `TRUST_PROXY` to the number of proxy hops so clients are not all treated as one IP.
+
+> **Token storage note:** refresh tokens are stored as SHA-256 hashes. Tokens issued before
+> hashing was introduced no longer match stored records, so existing users must log in again.
+> Each refresh rotates the cookie; presenting an old token again revokes every session for
+> that user. Password changes and account deletions also revoke all sessions.
 
 ## API conventions
 
@@ -258,7 +275,9 @@ Authorization: Bearer <accessToken>
 
 The refresh token lives in an `httpOnly` cookie and is sent automatically when the client
 uses `withCredentials: true`. Access tokens expire quickly; call `/auth/refresh-token` to
-obtain a new one.
+obtain a new one. Each refresh also issues a new refresh token in the response cookie; reuse
+of a rotated token is treated as theft and revokes all sessions. Use `/auth/logout-all` to
+revoke every session deliberately. Auth and user responses set `Cache-Control: no-store`.
 
 **Success responses** usually include a machine-readable `code` and a human-readable
 `message`:
@@ -314,8 +333,9 @@ List endpoints accept `limit` (1–50) and `offset` (0 or greater). Responses in
 | --- | --- | --- | --- |
 | `POST` | `/auth/register` | Public | Register a user or a whitelisted admin |
 | `POST` | `/auth/login` | Public | Sign in and receive an access token |
-| `POST` | `/auth/refresh-token` | Refresh cookie | Get a new access token |
-| `POST` | `/auth/logout` | Authenticated | Delete the refresh token and clear the cookie |
+| `POST` | `/auth/refresh-token` | Refresh cookie | Rotate the refresh token and get a new access token |
+| `POST` | `/auth/logout` | Authenticated | Delete the current refresh token and clear the cookie |
+| `POST` | `/auth/logout-all` | Authenticated | Revoke every refresh token for the signed-in user |
 
 ### Users — `/users`
 
@@ -443,7 +463,7 @@ erDiagram
   `banner` stores the Cloudinary `publicId`, `url`, `width` and `height`.
 - `Blog` timestamps map `createdAt` to `publishedAt`.
 - `Like` supports either a `blogId` or a `commentId`, with a required `userId`.
-- `Token` stores issued refresh tokens so they can be revoked on logout.
+- `Token` stores hashed refresh tokens so they can be rotated, revoked individually and revoked in bulk.
 
 ## Request examples
 
@@ -519,6 +539,7 @@ curl -X POST http://localhost:3000/api/v1/auth/refresh-token \
    npm run start:prod
    ```
 4. Terminate TLS at a reverse proxy such as Nginx or Caddy and forward to `PORT`.
+   Keep `TRUST_PROXY` at its default of `1` hop in that setup.
 5. Set the deployed frontend origin in the CORS allow-list in `src/config/index.ts`.
 6. Never commit `.env`; inject secrets through your host's environment settings.
 

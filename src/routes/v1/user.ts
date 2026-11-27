@@ -17,6 +17,12 @@ import { userIdParamSchema } from '@/validators/user';
 
 const router = Router();
 
+// User profiles and admin listings are private; never cache them.
+router.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
 router.get(
   '/current',
   authenticate,

@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { logger } from '@/lib/winston';
+import { audit } from '@/lib/audit';
+import { clearRefreshCookie } from '@/lib/cookies';
 import User from '@/models/user';
+import Token from '@/models/tokens';
 
 export const updateCurrentUser = async (
   req: Request,
@@ -78,6 +81,8 @@ export const updateCurrentUser = async (
       }
     }
 
+    const passwordChanged = Boolean(password);
+
     if (username) user.username = username;
     if (normalizedEmail) user.email = normalizedEmail;
     if (password) user.password = password;
@@ -93,12 +98,21 @@ export const updateCurrentUser = async (
 
     await user.save();
 
+    if (passwordChanged) {
+      await Token.deleteMany({ userId });
+      clearRefreshCookie(res);
+      audit('password_changed', { userId: String(userId) }, 'info');
+    }
+
     logger.info('Current user updated successfully', { userId });
+
+    const publicUser = user.toObject();
+    delete (publicUser as { password?: string }).password;
 
     res.status(200).json({
       code: 'UpdateCurrentUserSuccess',
       message: 'Current user updated successfully',
-      user,
+      user: publicUser,
     });
   } catch (err) {
     logger.error('Update current user error', {

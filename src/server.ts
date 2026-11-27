@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import helmet from 'helmet';
+import { MulterError } from 'multer';
 
 import config from '@/config';
 import limiter from '@/lib/rate_limit';
@@ -17,6 +18,22 @@ import type { ErrorRequestHandler } from 'express';
 
 const app = express();
 
+app.set('trust proxy', config.trustProxy);
+
+// Development may use any localhost port, but never arbitrary remote origins.
+const isLocalDevOrigin = (value?: string): boolean => {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'http:' &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
+    );
+  } catch {
+    return false;
+  }
+};
+
 // CORS configuration
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
@@ -25,9 +42,9 @@ const corsOptions: CorsOptions = {
     }
 
     const isAllowed =
-      config.nodeEnv === 'development' ||
       !origin ||
-      config.whiteListedOrigins.includes(origin);
+      config.whiteListedOrigins.includes(origin) ||
+      (config.nodeEnv === 'development' && isLocalDevOrigin(origin));
 
     if (isAllowed) {
       logger.info(`CORS allowed for origin: ${origin ?? 'no-origin'}`);
@@ -42,8 +59,8 @@ const corsOptions: CorsOptions = {
 
 // Apply middleware in the correct order
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 app.use(
   compression({
@@ -69,6 +86,18 @@ app.use((req, res) => {
 // Centralised error handler (e.g. CORS rejections, unexpected failures)
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   const message = err instanceof Error ? err.message : 'Internal server error';
+
+  if (err instanceof MulterError) {
+    const tooLarge = err.code === 'LIMIT_FILE_SIZE';
+    logger.warn(`Upload rejected: ${err.code}`);
+    res.status(tooLarge ? 413 : 400).json({
+      code: tooLarge ? 'PayloadTooLarge' : 'InvalidUpload',
+      message: tooLarge
+        ? 'Banner image must be less than 2MB'
+        : 'Invalid upload',
+    });
+    return;
+  }
 
   if (message.startsWith('CORS Error')) {
     logger.warn(message);
